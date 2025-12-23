@@ -42,10 +42,10 @@ global.languages = {
     str = global.rmml_current_mod + "-" + str
     if !variable_struct_exists(strings, str) {
       strings = global.languages.__mod_languages[0]
-    }
-    if !variable_struct_exists(strings, str) {
-      global.rmml.log("Translation not found for " + str + " in " + global.language_names_[global.current_language_])  
-      return str
+      if !variable_struct_exists(strings, str) {
+        global.rmml.log("Translation not found for " + str + " in " + global.language_names_[global.current_language_])  
+        return str
+      }
     }
     return strings[str]
   }
