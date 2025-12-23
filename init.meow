@@ -1,60 +1,64 @@
 global.languages = {
-  __mod_languages: {}
+  __mod_languages: []
   __load_languages_path: fun(path) {
-    if (directory_exists("mods/rmml/" + path) and directory_exists("mods/rmml/" + path + "/languages")) {
+    if directory_exists("mods/rmml/" + path) and directory_exists("mods/rmml/" + path + "/languages") {
       let index = 0
-      global.languages.__mod_languages[path] = []
-      while (index < array_length(global.language_names_)) {
-          let fileName = "mods/rmml/" + path + "/languages/" + global.language_names_[index] + ".csv"
-          if (!file_exists(fileName)) {
-              if (index == 0) { 
-                global.rmml.warn("No English translation file found: " + path + string(index))
-                return
-              }
-              else { 
-                global.rmml.log(path + ":" + global.language_names_[index] + " copied from English")
-                global.languages.__mod_languages[path][index] = global.languages.__mod_languages[path][0]
-                index += 1
-                continue
-              }
+      while index < array_length(global.language_names_) {
+        let fileName = "mods/rmml/" + path + "/languages/" + global.language_names_[index] + ".csv"
+        if !file_exists(fileName) {
+          if index == 0 { 
+            global.rmml.warn("No English translation file found: " + path)
+            return
           }
-
-          let grid = load_csv(fileName)
-          if !grid or !ds_exists(grid, ds_type_grid) {
-              global.rmml.warn(["csv languages could not be loaded", path, global.language_names_[index]])
-              index += 1
-              continue
+          else { 
+            global.rmml.log(path + ":" + global.language_names_[index] + " copied from English")
+            index += 1
+            continue
           }
-          
-          let languageStrings = {}
-          let hh = ds_grid_height(grid)
-          let i = 0
-          while (i < hh) {
-              let nm = ds_grid_get(grid, 0, i)
-              let str = ds_grid_get(grid, 1, i)
-              languageStrings[nm] = str
-              i += 1
-          }
-          ds_grid_destroy(grid)
-          array_push(global.languages.__mod_languages[path], languageStrings)
+        }
+        let grid = load_csv(fileName)
+        if !grid or !ds_exists(grid, ds_type_grid) {
+          global.rmml.warn(["csv languages could not be loaded", path, global.language_names_[index]])
           index += 1
+          continue
+        }
+        let lang_strings = global.languages.__mod_languages[global.current_language_]
+        let hh = ds_grid_height(grid)
+        let i = 0
+        while i < hh {
+          let nm = ds_grid_get(grid, 0, i)
+          let str = ds_grid_get(grid, 1, i)
+          lang_strings[path + "-" + nm] = str
+          i += 1
+        }
+        ds_grid_destroy(grid)
+        index += 1
       }
     }
   }
 
   get_string: fun(str) {
-    if (variable_struct_exists(global.languages.__mod_languages, global.rmml_current_mod)) {
-      if (array_length(global.languages.__mod_languages[global.rmml_current_mod]) > global.current_language_) {
-        return global.languages.__mod_languages[global.rmml_current_mod][global.current_language_][str]
-      }
+    let strings = global.languages.__mod_languages[global.current_language_]
+    str = global.rmml_current_mod + "-" + str
+    if !variable_struct_exists(strings, str) {
+      strings = global.languages.__mod_languages[0]
     }
-    global.rmml.log("Translation not found for " + global.rmml_current_mod + ": " + str + " in " + global.language_names_[global.current_language_])
-    return global.rmml_current_mod + ": " + str
+    if !variable_struct_exists(strings, str) {
+      global.rmml.log("Translation not found for " + str + " in " + global.language_names_[global.current_language_])  
+      return str
+    }
+    return strings[str]
   }
 }
-
-let mods = global.rmml.__compile_mod_list("mods/modlist.txt")
+-- initialise language array
 let i = 0
+while i < array_length(global.language_names_) {
+  array_push(global.languages.__mod_languages, {})
+  i += 1
+}
+-- add mods
+let mods = global.rmml.__compile_mod_list("mods/modlist.txt")
+i = 0
 while i < array_length(mods) {
   global.languages.__load_languages_path(mods[i])
   i+= 1
