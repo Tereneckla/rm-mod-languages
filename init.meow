@@ -28,7 +28,7 @@ global.languages = {
         while i < hh {
           let nm = ds_grid_get(grid, 0, i)
           let str = ds_grid_get(grid, 1, i)
-          lang_strings[path + "-" + nm] = str
+          lang_strings[path + nm] = str
           i += 1
         }
         ds_grid_destroy(grid)
@@ -39,15 +39,15 @@ global.languages = {
 
   get_string: fun(str) {
     let strings = global.languages.__mod_languages[global.current_language_]
-    str = global.rmml_current_mod + "-" + str
-    if !variable_struct_exists(strings, str) {
+    let mod_str = global.rmml_current_mod + str
+    if !variable_struct_exists(strings, mod_str) {
       strings = global.languages.__mod_languages[0]
-      if !variable_struct_exists(strings, str) {
-        global.rmml.log("Translation not found for " + str + " in " + global.language_names_[global.current_language_])  
-        return str
+      if !variable_struct_exists(strings, mod_str) {
+        global.rmml.log("Translation not found for " + global.rmml_current_mod + ": " + str + " in " + global.language_names_[global.current_language_])  
+        return global.rmml_current_mod + ": " + str
       }
     }
-    return strings[str]
+    return strings[mod_str]
   }
 }
 -- initialise language array
